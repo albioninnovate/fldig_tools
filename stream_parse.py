@@ -214,7 +214,7 @@ def ProcessdlfldigiLine(line):
     HABStatii[PayloadIndex]['alt'] = float(field_list[5])
     HABStatii[PayloadIndex]['rate'] = 0
     HABStatii[PayloadIndex]['updated'] = 1
-
+    
 
 def Processdlfldigi(s):
     line = ''
