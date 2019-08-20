@@ -2,6 +2,7 @@ import datetime
 import os
 import time
 import csv
+import socket
 #import os.path
 
 
@@ -196,7 +197,7 @@ def check_list(s, labels=headings):
 
 def ProcessdlfldigiLine(line):
     # $BUZZ,483,10:04:27,51.95022,-2.54435,00190,5*6856
-    print(line)
+    print('line received - ', line)
 
     field_list = line.split(",")
 
@@ -244,13 +245,13 @@ def dodlfldigi(host, port):
         s.connect((host, port))
 
         print("Connected to dl-fldigi")
-        Sources[2]['connected'] = 1
+        # Sources[2]['connected'] = 1
 
         Processdlfldigi(s)
 
         s.close()
     except:
-        Sources[2]['connected'] = 0
+        # Sources[2]['connected'] = 0
         pass
 
 
@@ -267,28 +268,39 @@ def dlfldigi_thread():
 
 
 if __name__ == '__main__':
-    print(log_path)
-    print(get_log_name())
 
-    while True:
-        full_path  = log_path+get_log_name()
+    dlfldigi_thread()
+    dodlfldigi()
 
-        last_lines = get_last_lines(full_path)
-        last_line = last_lines.decode('utf-8')
-        #print(last_line)
 
-        extract = extract_sentance(last_line)
-        #print(extract)
 
-        if not extract == None:
-            sentance = make_list(extract)
-            #print('sentance = ', sentance)
-            sentance_checked = check_list(sentance)
 
-            print('checked   =', sentance_checked)
-            write_file(sentance_checked)
 
-        time.sleep(5)
+
+
+
+    # print(log_path)
+    # print(get_log_name())
+
+    # while True:
+    #     full_path  = log_path+get_log_name()
+    #
+    #     last_lines = get_last_lines(full_path)
+    #     last_line = last_lines.decode('utf-8')
+    #     #print(last_line)
+    #
+    #     extract = extract_sentance(last_line)
+    #     #print(extract)
+    #
+    #     if not extract == None:
+    #         sentance = make_list(extract)
+    #         #print('sentance = ', sentance)
+    #         sentance_checked = check_list(sentance)
+    #
+    #         print('checked   =', sentance_checked)
+    #         write_file(sentance_checked)
+    #
+    #     time.sleep(5)
 
 
 
