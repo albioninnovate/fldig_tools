@@ -4,6 +4,7 @@ import time
 import csv
 import socket
 #import os.path
+from geonum import GeoPoint
 
 
 #todo correct for time zone difference . FLdigi and PITS use Zulu time !!
@@ -197,24 +198,37 @@ def check_list(s, labels=headings):
 
 def ProcessdlfldigiLine(line):
     # $BUZZ,483,10:04:27,51.95022,-2.54435,00190,5*6856
-    print('line received - ', line)
+    #print('line received - ', line)
 
     field_list = line.split(",")
 
-    Payload = field_list[0][1:]
-    PayloadIndex = FindFreePayload(Payload)
+    #Payload = field_list[0][1:]
+    print(field_list)
 
-    HABStatii[PayloadIndex]['payload'] = Payload
-    if j['time'] != HABStatii[PayloadIndex]['time']:
-        HABStatii[PayloadIndex]['lastupdate'] = int(time.time())
-        Sources[2]['lastupdate'] = int(time.time())
-    HABStatii[PayloadIndex]['time'] = field_list[2]
-    HABStatii[PayloadIndex]['lat'] = float(field_list[3])
-    HABStatii[PayloadIndex]['lon'] = float(field_list[4])
-    HABStatii[PayloadIndex]['alt'] = float(field_list[5])
-    HABStatii[PayloadIndex]['rate'] = 0
-    HABStatii[PayloadIndex]['updated'] = 1
-    
+    targ_sentance = field_list
+
+    targ_pos = [
+        float(targ_sentance[3]),
+        float(targ_sentance[4]),
+        float(targ_sentance[5]),
+        targ_sentance[0]
+    ]
+
+    calc_vector(targ_pos, my_pos)
+
+
+    # PayloadIndex = FindFreePayload(Payload)
+    #
+    # HABStatii[PayloadIndex]['payload'] = Payload
+    # if j['time'] != HABStatii[PayloadIndex]['time']:
+    #     HABStatii[PayloadIndex]['lastupdate'] = int(time.time())
+    #     Sources[2]['lastupdate'] = int(time.time())
+    # HABStatii[PayloadIndex]['time'] = field_list[2]
+    # HABStatii[PayloadIndex]['lat'] = float(field_list[3])
+    # HABStatii[PayloadIndex]['lon'] = float(field_list[4])
+    # HABStatii[PayloadIndex]['alt'] = float(field_list[5])
+    # HABStatii[PayloadIndex]['rate'] = 0
+    # HABStatii[PayloadIndex]['updated'] = 1
 
 def Processdlfldigi(s):
     line = ''
@@ -234,6 +248,7 @@ def Processdlfldigi(s):
                     line = temp
                 elif line != '':
                     line = line + temp
+
         else:
             time.sleep(1)
 
@@ -249,7 +264,10 @@ def dodlfldigi(host, port):
 
         Processdlfldigi(s)
 
+        print(x)
+
         s.close()
+
     except:
         # Sources[2]['connected'] = 0
         pass
@@ -264,19 +282,48 @@ def dlfldigi_thread():
     while 1:
         dodlfldigi(host, port)
 
+def calc_vector(targ_pos, my_pos):
+    #  tar_pos _ lat_B, lon_B, alt_B , 'name'
+    print( 'calc vector')
+    print(targ_pos[0])
 
+   # p1 = GeoPoint(lat=lat_A, lon=lon_A, altitude=alt_A, name=name_A)
+    p1 = GeoPoint(targ_pos[0],targ_pos[1],targ_pos[2],targ_pos[3])
+    print(p1)
+    #p2 = GeoPoint(lat=lat_B, lon=lon_B, altitude=alt_B, name=name_B)
+    p2 = GeoPoint(my_pos[0],my_pos[1],my_pos[2],my_pos[3])
+
+    connection_vector = p2 - p1
+
+    print('connection_vector' , connection_vector)
+
+    GeonumDistance = connection_vector.magnitude
+    GeonumDistance = float("{0:.4f}".format(GeonumDistance))
+
+    print("Geonum:", GeonumDistance, "km")
+    return  GeonumDistance
 
 
 if __name__ == '__main__':
 
+    global targ_sentance
+    global my_pos
+
+    my_pos = [52.2265, 0.0901, 24, 'Albion House']    #lat_B, lon_B, alt_B , 'name'
+
     dlfldigi_thread()
     dodlfldigi()
 
+    targ_pos = [
+        targ_sentance[4],
+        targ_sentance[5],
+        targ_sentance[6],
+        targ_sentance[0]
+        ]
+    print(targ_pos)
 
 
-
-
-
+    #calc_vector(targ_pos, my_pos)
 
 
     # print(log_path)
@@ -301,6 +348,3 @@ if __name__ == '__main__':
     #         write_file(sentance_checked)
     #
     #     time.sleep(5)
-
-
-
