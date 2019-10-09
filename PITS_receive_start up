@@ -1,0 +1,104 @@
+# Install
+
+git clone git@github.com:raspberrypi/skygate.git
+
+
+## TODO remove Skygate repo, keeping only the asoundrcfile and Auto start instructions 
+
+## Raspbian Configuration ##
+
+Enable the following with raspi-config:
+
+	Interfacing Options --> SPI --> Yes
+
+If you are using a GPS HAT, then you also need to set the serial port:
+
+	Interfacing Options --> Serial --> No (login) --> Yes (hardware)
+	
+## Loopback Sound Device ##
+
+Create a new ~/.asoundrc file using the supplied file, with
+
+	cp ~/skygate/.asoundrc ~ 
+
+## Usage (Autostart) ##
+
+Edit the following text file:
+
+	~/.config/lxsession/LXDE-pi/autostart
+
+and append these 2 lines:
+
+	@/home/pi/skygate/skygate/start_gateway.sh  
+	@/home/pi/skygate/skygate/start_rtty.sh
+
+
+
+
+sudo apt-get install wmctrl rtl-sdr dl-fldigi ssdv 
+
+
+
+## to launch
+
+cd skygate/skygate
+
+source ./bin/activate
+
+sudo modprobe snd-aloop pcm_substreams=1
+
+rtl_fm -M usb -f 434.250M -s 192000 -r 8000 - | aplay -f S16_LE -t raw -c 1
+
+dl-fldigi --hab
+
+
+
+
+------
+conda activate geonum_env
+python3 ../fldigi_tools/stream_parse.py
+
+
+
+
+install: annaconda for raspberrypi
+
+https://github.com/jjhelmus/berryconda
+
+
+
+
+Install geonum
+
+conda env create -n geonum_env -f geonum_env_py3_pi3.yml
+
+conda activate geonum_env
+
+pip install geonum
+
+
+
+
+
+Edited :  geonum_env_py3_pi3.yml
+
+# this file works for RaspberryPi 3 b v1.2, linux-armv7l.
+# Added rpi and SmartAg channels 
+# Removed basemap dependency
+ 
+channels:
+  - conda-forge
+  - rpi
+  - SmartAg
+
+dependencies:
+  - python>=3
+  - scipy
+  - matplotlib
+#  - basemap
+  - netcdf4
+  - latlon23
+  - pytest
+  - srtm.py
+
+

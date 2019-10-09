@@ -91,118 +91,12 @@ def write_file(list, fname='sentancelog',headings=headings):
         print(e)
         pass
 
-def check_list(s, labels=headings):
-
-#callsign
-    try:
-        if not isinstance(s[0], str):
-            s[0] = 'garbled'
-    except Exception as e:
-        s.append('nan')
-        #pass
-#Counter
-    try:
-        s[1] = int(s[1])
-        if not isinstance(s[1], str):
-            Counter = 'garbled'
-    except:
-        s.append('nan')
-       # pass
-#time
-    # if time not in range(00:00:00,12:59:59):
-    #     time = 'nan'
-#Latitude
-    try:
-        s[3] = float(s[3])
-
-        if not 0 <= s[3] <= 90:
-            #if s[3] not in range(0,90):
-            s[3] = 'nan'
-    except:
-        s.append('nan')
-      #  pass
-#Longitude
-    try:
-        s[4] = float(s[4])
-        if not 0 <= s[4] <= 90:
-            s[4] = 'nan'
-    except:
-        s.append('nan')
-    #    pass
-#Altitude
-    try:
-        s[5] = int(s[5])
-        if s[5] not in range(-1000,50000):
-            s[5] = 'nan'
-    except:
-        s.append('nan')
-      #  pass
-#HorizontalSpeed
-    try:
-        s[6] = float(s[6])
-        if not 0 <= s[6] <= 100000:
-            s[6] = 'nan'
-    except:
-        s.append('nan')
-      #  pass
-#Heading
-    try:
-        s[7] = int(s[7])
-        if s[7] not in range(0,360):
-            s[7] = 'nan'
-    except:
-        s.append('nan')
-      #  pass
-
-#Satellites
-    try:
-        s[8] = int(s[8])
-        if s[8] not in range(0, 15):
-            s[8] = 'nan'
-    except:
-        s.append('nan')
-   #     pass
-#Temperature
-    try:
-        s[9] = float(s[9])
-        if not -270 <= s[9] <= 200:
-            s[9] = 'nan'
-    except:
-        s.append('nan')
-      #  pass
-#BatteryVoltage
-    try:
-        s[10] = float(s[10])
-        if not 0 <= s[9] <= 36:
-            s[10] = 'nan'
-    except:
-        s.append('nan')
-      #  pass
-#BatteryCurrent
-    try:
-        s[11] = float(s[11])
-        if not 0 <= s[9] <= 3000:
-            s[11] = 'nan'
-    except:
-            s.append('nan')
-     #       pass
-
-    checked = []
-    for d in range(0,11):
-        checked.append(s[d])
-    return checked
-
-
 
 ##Code below from https://github.com/PiInTheSky/LCARS (with thanks)
 
 def ProcessdlfldigiLine(line):
-    # $BUZZ,483,10:04:27,51.95022,-2.54435,00190,5*6856
-    #print('line received - ', line)
-
     field_list = line.split(",")
 
-    #Payload = field_list[0][1:]
     print(field_list)
 
     targ_sentance = field_list
@@ -213,22 +107,8 @@ def ProcessdlfldigiLine(line):
         float(targ_sentance[5]),
         targ_sentance[0]
     ]
-
+    
     calc_vector(targ_pos, my_pos)
-
-
-    # PayloadIndex = FindFreePayload(Payload)
-    #
-    # HABStatii[PayloadIndex]['payload'] = Payload
-    # if j['time'] != HABStatii[PayloadIndex]['time']:
-    #     HABStatii[PayloadIndex]['lastupdate'] = int(time.time())
-    #     Sources[2]['lastupdate'] = int(time.time())
-    # HABStatii[PayloadIndex]['time'] = field_list[2]
-    # HABStatii[PayloadIndex]['lat'] = float(field_list[3])
-    # HABStatii[PayloadIndex]['lon'] = float(field_list[4])
-    # HABStatii[PayloadIndex]['alt'] = float(field_list[5])
-    # HABStatii[PayloadIndex]['rate'] = 0
-    # HABStatii[PayloadIndex]['updated'] = 1
 
 def Processdlfldigi(s):
     line = ''
@@ -259,7 +139,7 @@ def dodlfldigi(host, port):
 
         s.connect((host, port))
 
-        print("Connected to dl-fldigi")
+        #print("Connected to dl-fldigi")
         # Sources[2]['connected'] = 1
 
         Processdlfldigi(s)
@@ -321,30 +201,3 @@ if __name__ == '__main__':
         targ_sentance[0]
         ]
     print(targ_pos)
-
-
-    #calc_vector(targ_pos, my_pos)
-
-
-    # print(log_path)
-    # print(get_log_name())
-
-    # while True:
-    #     full_path  = log_path+get_log_name()
-    #
-    #     last_lines = get_last_lines(full_path)
-    #     last_line = last_lines.decode('utf-8')
-    #     #print(last_line)
-    #
-    #     extract = extract_sentance(last_line)
-    #     #print(extract)
-    #
-    #     if not extract == None:
-    #         sentance = make_list(extract)
-    #         #print('sentance = ', sentance)
-    #         sentance_checked = check_list(sentance)
-    #
-    #         print('checked   =', sentance_checked)
-    #         write_file(sentance_checked)
-    #
-    #     time.sleep(5)
