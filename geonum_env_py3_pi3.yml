@@ -1,0 +1,19 @@
+# this file works for RaspberryPi 3 b v1.2, linux-armv7l.
+# Added rpi and SmartAg channels 
+# Removed basemap dependency
+
+channels:
+  - conda-forge
+  - rpi
+  - SmartAg
+
+dependencies:
+  - python>=3
+  - scipy
+  - matplotlib
+#  - basemap
+  - netcdf4
+  - latlon23
+  - pytest
+  - srtm.py
+  
