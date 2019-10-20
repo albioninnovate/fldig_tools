@@ -12,31 +12,35 @@ from geonum import GeoPoint
 #log_path = r"C:\Users\ward\dl-fldigi.files\"
 log_path = r"C:/Users/ward/dl-fldigi.files/"
 
-headings = ['callsign',
-            'Counter',
-            'time',
-            'Latitude',
-            'Longitude',
-            'Altitude',
-            'HorizontalSpeed',
-            'Heading',
-            'Satellites',
-            'Temperature',
-            'BatteryVoltage',
-            'BatteryCurrent',
-            'accel_x',
-            'accel_y',
-            'accel_Z',
-            'mag_x',
-            'mag_y',
-            'mag_Z',
-            'G-X',
-            'G-Y',
-            'G-Z',
-            'Temp',
-            'Humid',
-            'TimeStamp'
-            ]
+# the standard data feilds sent by the PITS software
+headings_PITS = ['callsign',
+                'Counter',
+                'time',
+                'Latitude',
+                'Longitude',
+                'Altitude',
+                'HorizontalSpeed',
+                'Heading',
+                'Satellites',
+                'Temperature',
+                'BatteryVoltage',
+                'BatteryCurrent',
+                ]
+
+# data feilds sent by the sensors_balloon/src/sesnsors.py
+
+data_keys =    ['gyro_x'  ,
+                'gyro_y'  ,
+                'gyro_z'  ,
+                'accel_z' ,
+                'infrared',
+                'Temp.'   ,
+                'timestamp'
+                ]
+
+headings= headings_PITS + data_keys
+
+print('headings', headings)
 
 def write_file(list, fname='data',headings=headings,path='./'):
     now = datetime.datetime.now()
@@ -69,9 +73,9 @@ def write_file(list, fname='data',headings=headings,path='./'):
 def ProcessdlfldigiLine(line):
 
     try:
-  
+        
         data_list = line.split(",")
-        #print('data_list[0] = ', data_list[0])
+        print('data_list = ', data_list)
         #print('$'+call_sign)
 
         if data_list[0] == '$'+call_sign:
@@ -80,20 +84,22 @@ def ProcessdlfldigiLine(line):
             time_stamp = time_stamp.split('*')[0]       # split chars appened to by PITS software
             
             data_list.pop(0)                            # remove the strings from the list ( call sign)  
-            data_list.pop(1)                            #        transmit time
+            data_list.pop(1)                            #            transmit time
             data_list.pop(-1)                           #        timestamp+appended str  
-            data_list.append(float(time_stamp))         # add flast part of timestamp back into list  
+            data_list.append(float(time_stamp))     # add flast part of timestamp back into list 
 
-            data = [float(x) for x in data_list] # converts strings to float
 
+            data = [float(x) for x in data_list]    # converts strings to float
+              
             data.insert(0,'$'+call_sign)         # re add the str data that was removed above
             data.insert(2,time_item)               
 
             calc_vector(data, base_pos)
             
+            report_status(data)
+
             write_file(data)
 
-            report_status(data)
 
     except Exception as e:
         print('error in ProcessdlfldigiLine')
