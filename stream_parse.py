@@ -43,6 +43,15 @@ headings= headings_PITS + data_keys
 print('headings', headings)
 
 def write_file(list, fname='data',headings=headings,path='./'):
+
+    """
+
+    :param list:
+    :param fname:
+    :param headings:
+    :param path:
+    :return:
+    """
     now = datetime.datetime.now()
     today = now.strftime("%Y%m%d")
 
@@ -51,6 +60,9 @@ def write_file(list, fname='data',headings=headings,path='./'):
     full_path = path+full_name
 
     try:
+
+        print('WRITING to disk\n', list)
+        print('=====================\n')
         if os.path.isfile(full_path):
             with open(full_path, 'a', newline='') as f:
                 wr = csv.writer(f, quoting=csv.QUOTE_ALL)
@@ -71,11 +83,15 @@ def write_file(list, fname='data',headings=headings,path='./'):
 ##Code below from https://github.com/PiInTheSky/LCARS (with thanks)
 
 def ProcessdlfldigiLine(line):
+    """
+
+    :param line:
+    :return:
+    """
 
     try:
-        
         data_list = line.split(",")
-        print('data_list = ', data_list)
+       # print('data_list = ', data_list)
         #print('$'+call_sign)
 
         if data_list[0] == '$'+call_sign:
@@ -88,18 +104,33 @@ def ProcessdlfldigiLine(line):
             data_list.pop(-1)                           #        timestamp+appended str  
             data_list.append(float(time_stamp))     # add flast part of timestamp back into list 
 
-
             data = [float(x) for x in data_list]    # converts strings to float
               
             data.insert(0,'$'+call_sign)         # re add the str data that was removed above
             data.insert(2,time_item)               
 
-            calc_vector(data, base_pos)
-            
-            report_status(data)
+            try:
+                calc_vector(data, base_pos)
+            except Exception as e:
+                print('error in calc_vector')
+                print(e)
+                pass
 
-            write_file(data)
+            try:
+                write_file(data)
 
+            except Exception as e:
+                print('error in write_file')
+                print(e)
+                pass
+
+            try:
+                report_status(data)
+
+            except Exception as e:
+                print('error in report_status')
+                print(e)
+                pass
 
     except Exception as e:
         print('error in ProcessdlfldigiLine')
@@ -107,6 +138,11 @@ def ProcessdlfldigiLine(line):
         pass
 
 def Processdlfldigi(s):
+    """
+
+    :param s:
+    :return:
+    """
     line = ''
     while 1:
         reply = s.recv(1)
@@ -129,13 +165,16 @@ def Processdlfldigi(s):
 
 
 def dodlfldigi(host, port):
+    """
+
+    :param host:
+    :param port:
+    :return:
+    """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         s.connect((host, port))
-
-        #print("Connected to dl-fldigi")
-        # Sources[2]['connected'] = 1
 
         Processdlfldigi(s)
 
@@ -147,10 +186,13 @@ def dodlfldigi(host, port):
         print('Error in dodlfldigi')
         print(e)
         pass
-   
 
 
 def dlfldigi_thread():
+    """
+
+    :return:
+    """
     host = "localhost"
     port = 7322
 
@@ -160,10 +202,19 @@ def dlfldigi_thread():
         dodlfldigi(host, port)
 
 def calc_vector(targ_sentance, base_pos):
+    """
+
+    :param targ_sentance:
+
+        #targ_sentance[3] - Lat
+        #targ_sentance[4] - Lon
+        #targ_sentance[5] - Alt
+
+    :param base_pos:
+    :return:
+    """
     try:
-                                                    #targ_sentance[3] - Lat
-                                                    #targ_sentance[4] - Lon
-                                                    #targ_sentance[5] - Alt
+
 
         if 45 <= int(targ_sentance[3]) <= 70:       # is Lat is a reasonable number, for Europe. 
                                                     # extract the position (lat,lon alt and name)
@@ -198,47 +249,61 @@ def calc_vector(targ_sentance, base_pos):
         pass
 
 def report_status(data, headings=headings):
+    """
+
+    :param data:
+    :param headings:
+    :return:
+    """
     d = dict(zip(headings, data))
-   # print(d)
-    print('Horizontal (m/s, heading) :',
+
+    print("STATUS:")
+
+    print('Horizontal Speed (m/s), heading (deg)) :',
           d['HorizontalSpeed'],
           d['Heading'],
           '\n')
-    print('Temp. (internal)', d['Temperature'],
+    # width = 1
+    # base =  1
+    # print('Horizontal Speed (m/s), heading (deg)) :','{0:{width}{base}}'.format(d['HorizontalSpeed'],d['Heading'], base=base, width=width), end=' ')
+    # print()
+    print('Temp. (internal)', d['Temperature'],'C',
           '\n')
+
     print('Battery V,mA ',
           d['BatteryVoltage'],
           d['BatteryCurrent'],
           '\n')
 
     print('Acceleration (x,y,z) m/s2 :',
-          d['accel_x'],
-          d['accel_y'],
-          d['accel_Z'],
+          # d['accel_x'],
+          # d['accel_y'],
+          d['accel_z'],
           '\n')
 
-    print ('Magnetic field (x,y,z) gauss (??UNITS??) :',
-           d['mag_x'],
-           d['mag_y'],
-           d['mag_Z'],
-          '\n')
+    # print ('Magnetic field (x,y,z) gauss (??UNITS??) :',
+    #        d['mag_x'],
+    #        d['mag_y'],
+    #        d['mag_Z'],
+    #       '\n')
     
     print ('Gyro (x,y,z) rad/s  :',
-           d['G-X'],
-           d['G-Y'],
-           d['G-Z'],
+           d['gyro_x'],
+           d['gyro_y'],
+           d['gyro_z'],
           '\n')
 
     print('Temp/Humid (external) :',
-          d['Temp'],
-          d['Humid'],
+          d['Temp.'],
+          # d['Humid'],
           '\n')
 
-    print('TimeStamp (time at target) :', datetime.datetime.fromtimestamp(d['TimeStamp']).isoformat())
+    print('TimeStamp (time at target) :', datetime.datetime.fromtimestamp(d['timestamp']).isoformat())
     print('\n================================================================ends\n')
 
 if __name__ == '__main__':
-
+    """
+    """
     #global targ_sentance
     global base_pos
     global call_sign
