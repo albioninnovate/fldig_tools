@@ -5,7 +5,7 @@ import csv
 import socket
 #import os.path
 from geonum import GeoPoint
-
+import sys
 
 #todo correct for time zone difference . FLdigi and PITS use Zulu time !!
 
@@ -39,11 +39,9 @@ data_keys =    ['gyro_x'  ,
                 ]
 
 headings= headings_PITS + data_keys
-
-print('headings', headings)
+#print('headings', headings)
 
 def write_file(list, fname='data',headings=headings,path='./'):
-
     """
 
     :param list:
@@ -61,8 +59,9 @@ def write_file(list, fname='data',headings=headings,path='./'):
 
     try:
 
-        print('WRITING to disk\n', list)
-        print('=====================\n')
+        print('WRITING to disk')
+        print(list)
+        print('--')
         if os.path.isfile(full_path):
             with open(full_path, 'a', newline='') as f:
                 wr = csv.writer(f, quoting=csv.QUOTE_ALL)
@@ -205,17 +204,13 @@ def calc_vector(targ_sentance, base_pos):
     """
 
     :param targ_sentance:
-
         #targ_sentance[3] - Lat
         #targ_sentance[4] - Lon
         #targ_sentance[5] - Alt
-
     :param base_pos:
     :return:
     """
     try:
-
-
         if 45 <= int(targ_sentance[3]) <= 70:       # is Lat is a reasonable number, for Europe. 
                                                     # extract the position (lat,lon alt and name)
             targ_pos = [
@@ -230,16 +225,16 @@ def calc_vector(targ_sentance, base_pos):
         base = GeoPoint(base_pos[0],base_pos[1],base_pos[2],base_pos[3])
 
         connection_vector = targ - base
-        print('\n=Starts=======================================================\n')
-        print('Reveived at: ',datetime.datetime.now())
+        #print('\n=Starts=======================================================')
+        print('=====Received at: ',datetime.datetime.now(),'===================')
         print('Target: ', targ_pos[3],' , lat/lon : ',targ_pos[0], ' / ',targ_pos[1], 'Alt : ',targ_pos[2])  
-        print('\n')
+        #print('\n')
         print('connection_vector' , connection_vector)
 
         GeonumDistance = connection_vector.magnitude
         #GeonumDistance = float("{0:.4f}".format(GeonumDistance))
         
-        print("Geonum:", GeonumDistance, "km")
+        #print("Geonum:", GeonumDistance, "km")
         print("--")
         return  GeonumDistance
     
@@ -259,27 +254,16 @@ def report_status(data, headings=headings):
 
     print("STATUS:")
 
-    print('Horizontal Speed (m/s), heading (deg)) :',
-          d['HorizontalSpeed'],
-          d['Heading'],
-          '\n')
-    # width = 1
-    # base =  1
-    # print('Horizontal Speed (m/s), heading (deg)) :','{0:{width}{base}}'.format(d['HorizontalSpeed'],d['Heading'], base=base, width=width), end=' ')
-    # print()
-    print('Temp. (internal)', d['Temperature'],'C',
-          '\n')
+    print('Horizontal Speed, heading : ',
+          d['HorizontalSpeed'],'m/s',
+          d['Heading'],'deg'
+          )
 
-    print('Battery V,mA ',
-          d['BatteryVoltage'],
-          d['BatteryCurrent'],
-          '\n')
-
-    print('Acceleration (x,y,z) m/s2 :',
+    print('Acceleration :            ',
           # d['accel_x'],
           # d['accel_y'],
-          d['accel_z'],
-          '\n')
+          '  Z:', d['accel_z'], 'm/s2' 
+          )
 
     # print ('Magnetic field (x,y,z) gauss (??UNITS??) :',
     #        d['mag_x'],
@@ -287,33 +271,49 @@ def report_status(data, headings=headings):
     #        d['mag_Z'],
     #       '\n')
     
-    print ('Gyro (x,y,z) rad/s  :',
-           d['gyro_x'],
-           d['gyro_y'],
-           d['gyro_z'],
-          '\n')
+    print ('Gyro :                    ',
+           '  X:',d['gyro_x'],
+           '  Y:',d['gyro_y'],
+           '  Z:',d['gyro_z'],'rad/s'
+          )
 
-    print('Temp/Humid (external) :',
-          d['Temp.'],
+    print('infrared :                  ',
+          d['infrared'],
           # d['Humid'],
-          '\n')
+         )
+
+    print('Temp (external) :           ',
+          d['Temp.'],'C'
+          # d['Humid'],
+          )
+    print('Temp. (internal) :          ',
+          d['Temperature'],'C',
+          )
+
+    print('Battery :                   ',
+          d['BatteryVoltage'],'V',
+          d['BatteryCurrent'],'mA',
+          )
 
     print('TimeStamp (time at target) :', datetime.datetime.fromtimestamp(d['timestamp']).isoformat())
-    print('\n================================================================ends\n')
+    print('================================================================ends===\n')
 
 if __name__ == '__main__':
-    """
-    """
-    #global targ_sentance
-    global base_pos
     global call_sign
-
     call_sign = 'CST'
+    #global targ_pos
 
-    base_pos = [52.2265, 0.0901, 24, 'Albion House']    #lat_B, lon_B, alt_B , 'name'
+    global base_pos
+    base_pos = [52.2265, 0.0901, 24, 'Albion House']  # lat_B, lon_B, alt_B , 'name'
+
+    # if len(sys.argv) < 3:
+    #
+    #     print(' Set the base location with:\n ')
+    #     print('python3 stream_parse.py  latitude  longitude  altitude  name \n')
+    #     print('space between each parameter and the values in decimals\n ')
+    #
+    # else:
+    #     base_pos = [sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[3]]
 
     dlfldigi_thread()
     dodlfldigi()
-
-
-
