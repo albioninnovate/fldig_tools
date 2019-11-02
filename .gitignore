@@ -1,7 +1,7 @@
 # specifc files
 parser.ini
-
-
+*.ini
+parser.ini/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
