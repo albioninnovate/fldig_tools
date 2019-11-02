@@ -90,7 +90,7 @@ def ProcessdlfldigiLine(line):
 
     try:
         data_list = line.split(",")
-       # print('data_list = ', data_list)
+        print('data_list = ', data_list)
         #print('$'+call_sign)
 
         if data_list[0] == '$'+call_sign:
@@ -304,7 +304,7 @@ if __name__ == '__main__':
     #global targ_pos
 
     global base_pos
-    base_pos = [52.2265, 0.0901, 24, 'Albion House']  # lat_B, lon_B, alt_B , 'name'
+    base_pos = [52.2265, 0.1158, 11,'Green']  # lat_B, lon_B, alt_B , 'name'
 
     # if len(sys.argv) < 3:
     #
