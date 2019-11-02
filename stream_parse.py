@@ -7,8 +7,10 @@ import socket
 from geonum import GeoPoint
 import sys
 import configparser
+import smtplib
 
 #todo correct for time zone difference . FLdigi and PITS use Zulu time !!
+
 
 #log_path = r"C:\Users\ward\dl-fldigi.files\"
 log_path = r"C:/Users/ward/dl-fldigi.files/"
@@ -61,7 +63,7 @@ def write_file(list, fname='data',headings=headings,path='./'):
     try:
 
         print('WRITING to disk')
-        print(list)
+        #print(list)
         print('--')
         if os.path.isfile(full_path):
             with open(full_path, 'a', newline='') as f:
@@ -75,7 +77,7 @@ def write_file(list, fname='data',headings=headings,path='./'):
             return
 
     except Exception as e:
-        print('Trying to write the log.csv file')
+        print('Trying to write the log.csv file\n')
         print(e)
         pass
 
@@ -90,14 +92,16 @@ def ProcessdlfldigiLine(line):
     """
 
     try:
+        print('=====Received at: ', datetime.datetime.now(), '===================')
+        
         data_list = line.split(",")
-        print('data_list = ', data_list)
+        print(data_list)
 
 
         try:
             if len(line) >= 30:       # if the raw line received is long enough to contain the lat/lon write to disk
-                print('writing raw data to disk')
-                write_file(data_list,raw) # this will save the data in string format
+                #print('writing raw data to disk')
+                write_file(data_list,'raw') # Save the data in string format with prefix 'raw'
 
         except Exception as e:
             print('Error trying to write raw data received to file')
@@ -124,13 +128,12 @@ def ProcessdlfldigiLine(line):
                 print(e)
                 print('Now trying to convert location data to floats')
                 vector = calc_vector(data_list, base_pos)
-                continue
+                pass
               
             data.insert(0,'$'+call_sign)         # re add the str data that was removed above
             data.insert(2,time_item)
 
-            print('=====Received at: ', datetime.datetime.now(), '===================')
-
+            
             try:
                 vector = calc_vector(data, base_pos)
             except Exception as e:
@@ -147,32 +150,50 @@ def ProcessdlfldigiLine(line):
                 pass
 
             try:
-                email_status(conn)
-
-            except Exception as e:
-                print('error in email_status')
-                print(e)
-                pass
-
-            try:
                 report_status(data)
 
             except Exception as e:
                 print('error in report_status')
                 print(e)
                 pass
+##
+##            try:
+##                g_path ='https://docs.google.com/spreadsheets/d/1k-qRgvbagryQOY_ITY4zwQq_PNnk8upfq6uK4u5QEBU/edit?usp=sharing'
+##                
+##   
+##
+##                print('WRITING to gdrive')
+##                #print(data)
+##                print('--')
+##                if os.path.isfile(g_path):
+##                    with open(full_path, 'a', newline='') as f:
+##                        wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+##                        wr.writerow(data)  
+##                    return
+##
+####                with open(full_path, 'w', newline='') as f:
+####                    wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+####                    wr.writerow(headings)
+####                    return
+##
+## 
+##            except Exception as e:
+##                print('error in write_gdrive')
+##                print(e)
+##                pass
+## 
 
-            try:
-                email_status(vector)
-
-            except Exception as e:
-                print('error in email_status')
-                print(e)
-                pass
+##            try:
+##                email_status(vector)
+##
+##            except Exception as e:
+##                print('error in email_status')
+##                print(e)
+##                pass
             print('================================================================ends===\n')
 
     except Exception as e:
-        print('error in ProcessdlfldigiLine')
+        print('error in ProcessdlfldigiLine\n')
         print(e)
         pass
 
@@ -222,7 +243,7 @@ def dodlfldigi(host, port):
         s.close()
 
     except Exception as e:
-        print('Error in dodlfldigi')
+        print('Error in dodlfldigi\n')
         print(e)
         pass
 
@@ -278,7 +299,7 @@ def calc_vector(targ_sentance, base_pos):
         return  connection_vector
     
     except Exception as e:
-        print('error in calc_vector')
+        print('error in calc_vector\n')
         print(e)
         pass
 
@@ -335,15 +356,18 @@ def report_status(data, headings=headings):
           )
 
     print('TimeStamp (time at target) :', datetime.datetime.fromtimestamp(d['timestamp']).isoformat())
-    #print('================================================================ends===\n')
 
-def email_status(mail_body, gmail_user=):
+
+def email_status(mail_body):
     to = 'wardhills@gmail.com'
 
     gmail_user = config['gmail.com']['gmail_user']
     gmail_password = config['gmail.com']['gmail_password']
+    print(gmail_user)
+    print(gmail_password)
 
     smtpserver = smtplib.SMTP('smtp.gmail.com', 587)
+    #smtpserver = smtplib.SMTP('smtp.gmail.com', 465)
 
     smtpserver.ehlo()
     smtpserver.starttls()
@@ -353,7 +377,7 @@ def email_status(mail_body, gmail_user=):
 
     #mail_body = 'Hello Dr Hills.\n \n It is now: ' + time_now + '\n ' + ip_rpt + '\n' + ram_rpt + '\n ' + proc_rpt + '\n' + uptime_rpt + '\n' + conn_rpt + '\n' + temp_rpt + '\n'
     msg = MIMEText(mail_body)
-    msg['Subject'] = call_sign + datetime.datetime.fromtimestamp(d['timestamp']).isoformat())
+    msg['Subject'] = call_sign + datetime.datetime.fromtimestamp(d['timestamp']).isoformat()
     msg['From'] = gmail_user
     msg['To'] = to
     smtpserver.sendmail(gmail_user, [to], msg.as_string())
@@ -361,8 +385,12 @@ def email_status(mail_body, gmail_user=):
 
 
 if __name__ == '__main__':
+    config = configparser.ConfigParser()
     config.read('parser.ini')
 
+    global time_sent
+    time_sent = datetime.datetime.now()
+    
     global call_sign
     call_sign = 'CST'
     #global targ_pos
