@@ -6,6 +6,7 @@ import socket
 #import os.path
 from geonum import GeoPoint
 import sys
+import configparser
 
 #todo correct for time zone difference . FLdigi and PITS use Zulu time !!
 
@@ -91,11 +92,23 @@ def ProcessdlfldigiLine(line):
     try:
         data_list = line.split(",")
         print('data_list = ', data_list)
+
+
+        try:
+            if len(line) >= 30:       # if the raw line received is long enough to contain the lat/lon write to disk
+                print('writing raw data to disk')
+                write_file(data_list,raw) # this will save the data in string format
+
+        except Exception as e:
+            print('Error trying to write raw data received to file')
+            print(e)
+            pass
+
         #print('$'+call_sign)
 
         if data_list[0] == '$'+call_sign:
             time_item = data_list[2]
-            time_stamp = str(data_list[-1])             # extract the last field, convet to str
+            time_stamp = str(data_list[-1])             # extract the last field, convert to str
             time_stamp = time_stamp.split('*')[0]       # split chars appened to by PITS software
             
             data_list.pop(0)                            # remove the strings from the list ( call sign)  
@@ -103,13 +116,23 @@ def ProcessdlfldigiLine(line):
             data_list.pop(-1)                           #        timestamp+appended str  
             data_list.append(float(time_stamp))     # add flast part of timestamp back into list 
 
-            data = [float(x) for x in data_list]    # converts strings to float
+            try:
+                data = [float(x) for x in data_list]    # converts strings to float
+
+            except Exception as e:
+                print('Error trying to convert received data to floats')
+                print(e)
+                print('Now trying to convert location data to floats')
+                vector = calc_vector(data_list, base_pos)
+                continue
               
             data.insert(0,'$'+call_sign)         # re add the str data that was removed above
-            data.insert(2,time_item)               
+            data.insert(2,time_item)
+
+            print('=====Received at: ', datetime.datetime.now(), '===================')
 
             try:
-                calc_vector(data, base_pos)
+                vector = calc_vector(data, base_pos)
             except Exception as e:
                 print('error in calc_vector')
                 print(e)
@@ -124,6 +147,14 @@ def ProcessdlfldigiLine(line):
                 pass
 
             try:
+                email_status(conn)
+
+            except Exception as e:
+                print('error in email_status')
+                print(e)
+                pass
+
+            try:
                 report_status(data)
 
             except Exception as e:
@@ -131,10 +162,20 @@ def ProcessdlfldigiLine(line):
                 print(e)
                 pass
 
+            try:
+                email_status(vector)
+
+            except Exception as e:
+                print('error in email_status')
+                print(e)
+                pass
+            print('================================================================ends===\n')
+
     except Exception as e:
         print('error in ProcessdlfldigiLine')
         print(e)
         pass
+
 
 def Processdlfldigi(s):
     """
@@ -161,7 +202,6 @@ def Processdlfldigi(s):
                     line = line + temp
         else:
             time.sleep(1)
-
 
 def dodlfldigi(host, port):
     """
@@ -202,7 +242,6 @@ def dlfldigi_thread():
 
 def calc_vector(targ_sentance, base_pos):
     """
-
     :param targ_sentance:
         #targ_sentance[3] - Lat
         #targ_sentance[4] - Lon
@@ -225,8 +264,8 @@ def calc_vector(targ_sentance, base_pos):
         base = GeoPoint(base_pos[0],base_pos[1],base_pos[2],base_pos[3])
 
         connection_vector = targ - base
-        #print('\n=Starts=======================================================')
-        print('=====Received at: ',datetime.datetime.now(),'===================')
+
+        #print('=====Received at: ',datetime.datetime.now(),'===================')
         print('Target: ', targ_pos[3],' , lat/lon : ',targ_pos[0], ' / ',targ_pos[1], 'Alt : ',targ_pos[2])  
         #print('\n')
         print('connection_vector' , connection_vector)
@@ -236,7 +275,7 @@ def calc_vector(targ_sentance, base_pos):
         
         #print("Geonum:", GeonumDistance, "km")
         print("--")
-        return  GeonumDistance
+        return  connection_vector
     
     except Exception as e:
         print('error in calc_vector')
@@ -296,9 +335,34 @@ def report_status(data, headings=headings):
           )
 
     print('TimeStamp (time at target) :', datetime.datetime.fromtimestamp(d['timestamp']).isoformat())
-    print('================================================================ends===\n')
+    #print('================================================================ends===\n')
+
+def email_status(mail_body, gmail_user=):
+    to = 'wardhills@gmail.com'
+
+    gmail_user = config['gmail.com']['gmail_user']
+    gmail_password = config['gmail.com']['gmail_password']
+
+    smtpserver = smtplib.SMTP('smtp.gmail.com', 587)
+
+    smtpserver.ehlo()
+    smtpserver.starttls()
+    smtpserver.ehlo
+    smtpserver.login(gmail_user, gmail_password)
+
+
+    #mail_body = 'Hello Dr Hills.\n \n It is now: ' + time_now + '\n ' + ip_rpt + '\n' + ram_rpt + '\n ' + proc_rpt + '\n' + uptime_rpt + '\n' + conn_rpt + '\n' + temp_rpt + '\n'
+    msg = MIMEText(mail_body)
+    msg['Subject'] = call_sign + datetime.datetime.fromtimestamp(d['timestamp']).isoformat())
+    msg['From'] = gmail_user
+    msg['To'] = to
+    smtpserver.sendmail(gmail_user, [to], msg.as_string())
+    smtpserver.quit()
+
 
 if __name__ == '__main__':
+    config.read('parser.ini')
+
     global call_sign
     call_sign = 'CST'
     #global targ_pos
